@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,18 +6,18 @@ using UnityEngine;
 public class ChunkData : MonoBehaviour
 {
     const int ChunkSizeConst = 16;
-    const int ChunkHeightConst = 42;
+    const int ChunkHeightConst = 36;
+    const int MaxGroundHeightConst = 16;
+
     public CubeEnum[,,] Body;
 
     public static int ChunkSize { get => ChunkSizeConst; }
     public static int ChunkHeight { get => ChunkHeightConst; }
+    public static int MaxGroundHeight { get => MaxGroundHeightConst; }
 
 
     public ChunkData(CubeEnum[,,] body) { Body = body; }
-    public ChunkData()
-    {
-        Body = new CubeEnum[ChunkSizeConst, ChunkHeightConst, ChunkSizeConst];
-    }
+    public ChunkData() { Body = new CubeEnum[ChunkSizeConst, ChunkHeightConst, ChunkSizeConst]; }
 
 
     public void FillWith(CubeEnum cubeEnum)
@@ -33,81 +34,37 @@ public class ChunkData : MonoBehaviour
         }
     }
 
-    // Static methods
-    public static ChunkData Empty()
+    public static ChunkData GeneratePerlinChunk(int offsetX, int offsetZ)
     {
-        ChunkData cd = new ChunkData();
-        cd.FillWith(CubeEnum.empty);
-        return cd;
-    }
-    public static ChunkData Rock()
-    {
-        ChunkData cd = new ChunkData();
-        cd.FillWith(CubeEnum.rock);
-        return cd;
-    }
-    public static ChunkData Grass()
-    {
-        ChunkData cd = new ChunkData();
-        cd.FillWith(CubeEnum.grass);
-        return cd;
-    }
-    public static ChunkData Smow()
-    {
-        ChunkData cd = new ChunkData();
-        cd.FillWith(CubeEnum.snow);
-        return cd;
-    }
-
-    public static ChunkData PerlinRock(int offsetX, int offsetZ)
-    {
-        ChunkData cd = new ChunkData();
+        ChunkData chunkData = new ChunkData();
 
         for (int x = 0; x < ChunkSize; x++)
         {
-            for (int y = 0; y < ChunkHeight; y++)
+            for (int y = 0; y < MaxGroundHeight; y++)
             {
                 for (int z = 0; z < ChunkSizeConst; z++)
                 {
-                    float c1 = (float)x / ChunkSize + offsetX;
-                    float c2 = (float)z / ChunkSize + offsetZ;
+                    // generates the groundheight for speciffic x,z coordinate
+                    float perlinX = (float)x / ChunkSizeConst + offsetX;
+                    float perlinZ = (float)z / ChunkSizeConst + offsetZ;
+                    float perlinGroundHeight = Mathf.PerlinNoise(perlinX, perlinZ) * MaxGroundHeight;
 
-                    if (Mathf.PerlinNoise(c1, c2) * ChunkHeight > y)
-                        cd.Body[x, y, z] = CubeEnum.rock;
-                }
-            }
-        }
-
-        return cd;
-    }
-
-    public static ChunkData PerlinRockWithGrassAndSnow(int offsetX, int offsetZ)
-    {
-        ChunkData cd = new ChunkData();
-
-        for (int x = 0; x < ChunkSize; x++)
-        {
-            for (int y = 0; y < ChunkHeight; y++)
-            {
-                for (int z = 0; z < ChunkSizeConst; z++)
-                {
-                    float c1 = (float)x / ChunkSize + offsetX;
-                    float c2 = (float)z / ChunkSize + offsetZ;
-
-
-                    if (Mathf.PerlinNoise(c1, c2) * ChunkHeight - 1 > y)
-                    { cd.Body[x, y, z] = CubeEnum.rock; }
-                    else if (Mathf.PerlinNoise(c1, c2) * ChunkHeight > y)
+                    // the top layer is grass or snow (if it is high enough)
+                    // the rest is filled with rocks
+                    if (perlinGroundHeight > y + 1)
                     {
-                        if (y > ChunkHeight * 0.7)
-                            cd.Body[x, y, z] = CubeEnum.snow;
+                        chunkData.Body[x, y, z] = CubeEnum.rock;
+                    }
+                    else if (perlinGroundHeight > y)
+                    {
+                        if (y > MaxGroundHeight * 0.7)
+                            chunkData.Body[x, y, z] = CubeEnum.snow;
                         else
-                            cd.Body[x, y, z] = CubeEnum.grass;
+                            chunkData.Body[x, y, z] = CubeEnum.grass;
                     }
                 }
             }
         }
-
-        return cd;
+        return chunkData;
     }
 }

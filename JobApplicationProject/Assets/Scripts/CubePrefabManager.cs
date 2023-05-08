@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CubePrefabManager : UnityEngine.Singleton<CubePrefabManager>
+public class CubePrefabManager : Singleton<CubePrefabManager>
 {
     [SerializeField] GameObject ErrorCubePrefab;
     [Tooltip("Coresponds to the CubeEnums")]

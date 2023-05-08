@@ -1,61 +1,78 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using TreeEditor;
 using UnityEngine;
+using static UnityEditor.Progress;
 
 public class ChunkManager : MonoBehaviour
 {
-    Dictionary<Vector3Int, Chunk> Chunks = new Dictionary<Vector3Int, Chunk>();
+    Dictionary<Vector2Int, GameObject> Chunks = new Dictionary<Vector2Int, GameObject>();
+    List<Vector2Int> ActiveChunks = new List<Vector2Int>();
 
     [SerializeField] GameObject ChunkPrefab;
+    [SerializeField] Player Player;
 
-    void Start()
+    CubeEnum GetBlockTypeAt(Vector3Int v)
     {
-        // SimpleChunkTesting();
 
-        for (int x = 0; x < 10; x++)
+        return CubeEnum.empty;
+    }
+
+    private void Update()
+    {
+        // gets player position in the chunk
+        int playerX = (int)Math.Floor(Player.transform.position.x / ChunkData.ChunkSize);
+        int playerZ = (int)Math.Floor(Player.transform.position.z / ChunkData.ChunkSize);
+        // debug text // TODO: rm
+        GameObject.Find("DebugText").GetComponent<TextMeshProUGUI>().text = $"{playerX} : {playerZ}";
+
+
+        // list of chunks, that should be vidible
+        List<Vector2Int> newActiveChunks = new List<Vector2Int>();
+        const int size = 4;
+        for (int x = -size; x <= size; x++)
         {
-            for (int z = 0; z < 10; z++)
+            for (int z = -size; z <= size; z++)
+            { newActiveChunks.Add(new Vector2Int(playerX + x, playerZ + z)); }
+        }
+
+        // removes all inactive chunks
+        foreach (Vector2Int c in ActiveChunks)
+        {
+            if (!newActiveChunks.Contains(c) && Chunks.ContainsKey(c))
             {
-                SimplePerlinChunkTesting(new Vector3Int(x, 0, z));
+                var _go = Chunks[c];
+                Chunks.Remove(c);
+                Destroy(_go);
             }
         }
+
+        // generates chunk data and paints the chunk
+        foreach (Vector2Int v in newActiveChunks)
+        {
+            if (!Chunks.ContainsKey(v))
+            {
+                Vector3Int offset = new Vector3Int(v.x, 0, v.y);
+                ChunkData cdRock = ChunkData.GeneratePerlinChunk(offset.x, offset.z);
+
+                Chunks[v] = InstantiateChunk(cdRock, offset);
+            }
+        }
+
+        ActiveChunks = newActiveChunks;
     }
 
-    void SimplePerlinChunkTesting(Vector3Int offset)
+    GameObject InstantiateChunk(ChunkData cdRock, Vector3Int offset)
     {
-        ChunkData cdRock = ChunkData.PerlinRockWithGrassAndSnow(offset.x, offset.z);
-
-        var rock = Instantiate(ChunkPrefab, parent: transform);
-        rock.transform.localPosition = offset * ChunkData.ChunkSize;
-        SpawnChunk(rock, cdRock);
+        var chunk = Instantiate(ChunkPrefab, parent: transform);
+        chunk.transform.localPosition = offset * ChunkData.ChunkSize;
+        DrawChunk(chunk, cdRock);
+        return chunk;
     }
 
-
-    void SimpleChunkTesting()
-    {
-        ChunkData cdRock = ChunkData.Rock();
-        var rock = Instantiate(ChunkPrefab, parent: transform);
-        rock.transform.localPosition = new Vector3(0, 0, 0) * ChunkData.ChunkSize;
-        SpawnChunk(rock, cdRock);
-
-        ChunkData cdGrass = ChunkData.Grass();
-        var grass = Instantiate(ChunkPrefab, parent: transform);
-        grass.transform.localPosition = new Vector3(0, 0, 1) * ChunkData.ChunkSize;
-        SpawnChunk(grass, cdGrass);
-
-        ChunkData cdEmpty = ChunkData.Empty();
-        var empty = Instantiate(ChunkPrefab, parent: transform);
-        empty.transform.localPosition = new Vector3(0, 0, 2) * ChunkData.ChunkSize;
-        SpawnChunk(empty, cdEmpty);
-
-        ChunkData cdSnow = ChunkData.Smow();
-        var snow = Instantiate(ChunkPrefab, parent: transform);
-        snow.transform.localPosition = new Vector3(0, 0, 3) * ChunkData.ChunkSize;
-        SpawnChunk(snow, cdSnow);
-    }
-
-    void SpawnChunk(GameObject Chunk, ChunkData cd)
+    void DrawChunk(GameObject Chunk, ChunkData cd)
     {
         for (int x = 0; x < ChunkData.ChunkSize; x++)
         {
@@ -83,13 +100,14 @@ public class ChunkManager : MonoBehaviour
             {
                 var _ = pos + v;
 
-                try //TODO: redo
-                {
-                    if (cd.Body[_.x, _.y, _.z] == CubeEnum.empty)
-                        return true;
-                }
-                catch (System.Exception)
-                { }
+                // rangeCheck
+                int s = ChunkData.ChunkSize;
+                if (_.x < 0 || _.y < 0 || _.z < 0
+                    || _.x >= s || _.y >= s || _.z >= s)
+                    continue; // TODO: fix bug: cubes that are on the edge of the chunk may be missing
+
+                if (cd.Body[_.x, _.y, _.z] == CubeEnum.empty)
+                    return true;
             }
             return false;
         }
