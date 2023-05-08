@@ -55,4 +55,26 @@ public class ChunkData : MonoBehaviour
         cd.FillWith(CubeEnum.snow);
         return cd;
     }
+
+    public static ChunkData PerlinRock(int offsetX, int offsetZ)
+    {
+        ChunkData cd = new ChunkData();
+
+        for (int x = 0; x < ChunkSizeConst; x++)
+        {
+            for (int y = 0; y < ChunkSizeConst; y++)
+            {
+                for (int z = 0; z < ChunkSizeConst; z++)
+                {
+                    float c1 = (float)x / ChunkSize + offsetX;
+                    float c2 = (float)z / ChunkSize + offsetZ;
+
+                    if (Mathf.PerlinNoise(c1, c2) * ChunkSize > y)
+                        cd.Body[x, y, z] = CubeEnum.rock;
+                }
+            }
+        }
+
+        return cd;
+    }
 }
