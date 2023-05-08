@@ -24,7 +24,7 @@ public class ChunkManager : MonoBehaviour
 
     void SimplePerlinChunkTesting(Vector3Int offset)
     {
-        ChunkData cdRock = ChunkData.PerlinRock(offset.x, offset.z);
+        ChunkData cdRock = ChunkData.PerlinRockWithGrassAndSnow(offset.x, offset.z);
 
         var rock = Instantiate(ChunkPrefab, parent: transform);
         rock.transform.localPosition = offset * ChunkData.ChunkSize;
@@ -59,7 +59,7 @@ public class ChunkManager : MonoBehaviour
     {
         for (int x = 0; x < ChunkData.ChunkSize; x++)
         {
-            for (int y = 0; y < ChunkData.ChunkSize; y++)
+            for (int y = 0; y < ChunkData.ChunkHeight; y++)
             {
                 for (int z = 0; z < ChunkData.ChunkSize; z++)
                 {
