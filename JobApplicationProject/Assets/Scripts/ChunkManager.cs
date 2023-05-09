@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using TreeEditor;
 using UnityEngine;
@@ -8,18 +9,25 @@ using static UnityEditor.Progress;
 
 public class ChunkManager : MonoBehaviour
 {
+    // active chunks
     Dictionary<Vector2Int, GameObject> Chunks = new Dictionary<Vector2Int, GameObject>();
     List<Vector2Int> ActiveChunks = new List<Vector2Int>();
 
+    // queues to build/destory for corutines ChunkBuilderCorutine and ChunkDestroyerCorutine 
+    Queue<Tuple<ChunkData, GameObject>> ChunkBuildQueue = new Queue<Tuple<ChunkData, GameObject>>();
+    Queue<GameObject> ChunkDestroyQueue = new Queue<GameObject>();
+
+    CubePrefabManager CubePrefabManager;
     [SerializeField] GameObject ChunkPrefab;
     [SerializeField] Player Player;
 
-    CubeEnum GetBlockTypeAt(Vector3Int v)
+    void Start()
     {
+        CubePrefabManager = CubePrefabManager.Instance;
 
-        return CubeEnum.empty;
+        StartCoroutine(ChunkBuilderCorutine());
+        StartCoroutine(ChunkDestroyerCorutine());
     }
-
     private void Update()
     {
         // gets player position in the chunk
@@ -45,7 +53,7 @@ public class ChunkManager : MonoBehaviour
             {
                 var _go = Chunks[c];
                 Chunks.Remove(c);
-                StartCoroutine(DestroyChunk(_go));
+                ChunkDestroyQueue.Enqueue(_go);
             }
         }
 
@@ -55,49 +63,69 @@ public class ChunkManager : MonoBehaviour
             if (!Chunks.ContainsKey(v))
             {
                 Vector3Int offset = new Vector3Int(v.x, 0, v.y);
-                ChunkData cdRock = ChunkData.GeneratePerlinChunk(offset.x, offset.z);
+                ChunkData chunkData = ChunkData.GeneratePerlinChunk(offset.x, offset.z);
 
-                Chunks[v] = InstantiateChunk(cdRock, offset);
+                var chunk = Instantiate(ChunkPrefab, parent: transform);
+                chunk.transform.localPosition = offset * ChunkData.ChunkSize;
+                Chunks[v] = chunk;
+                ChunkBuildQueue.Enqueue(Tuple.Create(chunkData, chunk));
             }
         }
 
         ActiveChunks = newActiveChunks;
     }
 
-    GameObject InstantiateChunk(ChunkData chunkData, Vector3Int offset)
+    CubeEnum GetBlockTypeAt(Vector3Int v)
     {
-        var chunk = Instantiate(ChunkPrefab, parent: transform);
-        chunk.transform.localPosition = offset * ChunkData.ChunkSize;
-        StartCoroutine(DrawChunk(chunk, chunkData));
-        return chunk;
-    }
-    // destroys each visible cube
-    // using corutine we can destroy the chunks gradualy (we don't influnce the performence as much)
-    IEnumerator DestroyChunk(GameObject Chunk)
-    {
-        int i = 0;
-        foreach (Transform child in Chunk.transform)
-        {
-            i++;
-            Destroy(child.gameObject);
 
-            if (i % ChunkData.ChunkSize * 2 == 0)
-                yield return null;
-        }
-        Destroy(Chunk);
+        return CubeEnum.empty;
     }
+
+    // corutine that should be called only once on the start
+    // every frame draws one chunk from the ChunkBuildQueue
+    // (drawing multiple chunks a frame might cause lag)
+    IEnumerator ChunkBuilderCorutine()
+    {
+        while (true)
+        {
+            if (ChunkBuildQueue.Count > 0)
+            {
+                var data = ChunkBuildQueue.Dequeue();
+                ChunkData chunkData = data.Item1;
+                GameObject chunk = data.Item2;
+                DrawChunk(chunk, chunkData);
+            }
+            yield return null;
+        }
+    }
+
+    // corutine that should be called only once on the start
+    // every frame destroys one chunk from the ChunkDestroyQueue
+    // (destroying multiple chunks a frame might cause lag)
+    IEnumerator ChunkDestroyerCorutine()
+    {
+        while (true)
+        {
+            if (ChunkDestroyQueue.Count > 0)
+            {
+                GameObject go = ChunkDestroyQueue.Dequeue();
+                Destroy(go);
+            }
+            yield return null;
+        }
+    }
+
     // instantiates each visible cube
     // using corutine we can instantiate the chunks gradualy (we don't influnce the performence as much)
-    IEnumerator DrawChunk(GameObject chunk, ChunkData cd)
+    void DrawChunk(GameObject chunk, ChunkData cd)
     {
-        yield return null;
         for (int x = 0; x < ChunkData.ChunkSize; x++)
         {
             for (int y = 0; y < ChunkData.ChunkHeight; y++)
             {
                 for (int z = 0; z < ChunkData.ChunkSize; z++)
                 {
-                    var prefab = CubePrefabManager.Instance.GetCubePrefab(cd.Body[x, y, z]);
+                    var prefab = CubePrefabManager.GetCubePrefab(cd.Body[x, y, z]);
                     if (prefab != null && isVisibleCheck(new Vector3Int(x, y, z)))
                     {
                         if (chunk != null)
@@ -108,7 +136,6 @@ public class ChunkManager : MonoBehaviour
                     }
                 }
             }
-            yield return null;
         }
 
         bool isVisibleCheck(Vector3Int pos)
