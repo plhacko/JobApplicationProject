@@ -31,7 +31,7 @@ public class ChunkManager : MonoBehaviour
 
         // list of chunks, that should be vidible
         List<Vector2Int> newActiveChunks = new List<Vector2Int>();
-        const int size = 4;
+        const int size = 5;
         for (int x = -size; x <= size; x++)
         {
             for (int z = -size; z <= size; z++)
@@ -45,7 +45,7 @@ public class ChunkManager : MonoBehaviour
             {
                 var _go = Chunks[c];
                 Chunks.Remove(c);
-                Destroy(_go);
+                StartCoroutine(DestroyChunk(_go));
             }
         }
 
@@ -64,16 +64,33 @@ public class ChunkManager : MonoBehaviour
         ActiveChunks = newActiveChunks;
     }
 
-    GameObject InstantiateChunk(ChunkData cdRock, Vector3Int offset)
+    GameObject InstantiateChunk(ChunkData chunkData, Vector3Int offset)
     {
         var chunk = Instantiate(ChunkPrefab, parent: transform);
         chunk.transform.localPosition = offset * ChunkData.ChunkSize;
-        DrawChunk(chunk, cdRock);
+        StartCoroutine(DrawChunk(chunk, chunkData));
         return chunk;
     }
-
-    void DrawChunk(GameObject Chunk, ChunkData cd)
+    // destroys each visible cube
+    // using corutine we can destroy the chunks gradualy (we don't influnce the performence as much)
+    IEnumerator DestroyChunk(GameObject Chunk)
     {
+        int i = 0;
+        foreach (Transform child in Chunk.transform)
+        {
+            i++;
+            Destroy(child.gameObject);
+
+            if (i % ChunkData.ChunkSize * 2 == 0)
+                yield return null;
+        }
+        Destroy(Chunk);
+    }
+    // instantiates each visible cube
+    // using corutine we can instantiate the chunks gradualy (we don't influnce the performence as much)
+    IEnumerator DrawChunk(GameObject chunk, ChunkData cd)
+    {
+        yield return null;
         for (int x = 0; x < ChunkData.ChunkSize; x++)
         {
             for (int y = 0; y < ChunkData.ChunkHeight; y++)
@@ -83,11 +100,15 @@ public class ChunkManager : MonoBehaviour
                     var prefab = CubePrefabManager.Instance.GetCubePrefab(cd.Body[x, y, z]);
                     if (prefab != null && isVisibleCheck(new Vector3Int(x, y, z)))
                     {
-                        var go = Instantiate(prefab, parent: Chunk.transform);
-                        go.transform.localPosition = new Vector3(x, y, z);
+                        if (chunk != null)
+                        {
+                            var go = Instantiate(prefab, parent: chunk.transform);
+                            go.transform.localPosition = new Vector3(x, y, z);
+                        }
                     }
                 }
             }
+            yield return null;
         }
 
         bool isVisibleCheck(Vector3Int pos)

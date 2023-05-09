@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ChunkData : MonoBehaviour
+public class ChunkData
 {
     const int ChunkSizeConst = 16;
     const int ChunkHeightConst = 36;
@@ -14,7 +14,6 @@ public class ChunkData : MonoBehaviour
     public static int ChunkSize { get => ChunkSizeConst; }
     public static int ChunkHeight { get => ChunkHeightConst; }
     public static int MaxGroundHeight { get => MaxGroundHeightConst; }
-
 
     public ChunkData(CubeEnum[,,] body) { Body = body; }
     public ChunkData() { Body = new CubeEnum[ChunkSizeConst, ChunkHeightConst, ChunkSizeConst]; }
