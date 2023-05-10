@@ -21,6 +21,8 @@ public class ChunkManager : MonoBehaviour
     [SerializeField] GameObject ChunkPrefab;
     [SerializeField] Player Player;
 
+    [SerializeField] int RenderDistance = 5;
+
     void Start()
     {
         CubePrefabManager = CubePrefabManager.Instance;
@@ -39,10 +41,9 @@ public class ChunkManager : MonoBehaviour
 
         // list of chunks, that should be vidible
         List<Vector2Int> newActiveChunks = new List<Vector2Int>();
-        const int size = 5;
-        for (int x = -size; x <= size; x++)
+        for (int x = -RenderDistance; x <= RenderDistance; x++)
         {
-            for (int z = -size; z <= size; z++)
+            for (int z = -RenderDistance; z <= RenderDistance; z++)
             { newActiveChunks.Add(new Vector2Int(playerX + x, playerZ + z)); }
         }
 
