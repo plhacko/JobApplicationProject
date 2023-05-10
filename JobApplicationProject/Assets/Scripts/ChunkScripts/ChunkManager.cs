@@ -7,10 +7,10 @@ using TreeEditor;
 using UnityEngine;
 using static UnityEditor.Progress;
 
-public class ChunkManager : MonoBehaviour
+public class ChunkManager : Singleton<ChunkManager>
 {
     // active chunks
-    Dictionary<Vector2Int, GameObject> Chunks = new Dictionary<Vector2Int, GameObject>();
+    Dictionary<Vector2Int, GameObject> ChunkDict = new Dictionary<Vector2Int, GameObject>();
     List<Vector2Int> ActiveChunks = new List<Vector2Int>();
 
     // queues to build/destory for corutines ChunkBuilderCorutine and ChunkDestroyerCorutine 
@@ -36,7 +36,7 @@ public class ChunkManager : MonoBehaviour
         int playerX = (int)Math.Floor(Player.transform.position.x / ChunkData.ChunkSize);
         int playerZ = (int)Math.Floor(Player.transform.position.z / ChunkData.ChunkSize);
         // debug text // TODO: rm
-        GameObject.Find("DebugText").GetComponent<TextMeshProUGUI>().text = $"{playerX} : {playerZ}";
+        GameObject.Find("PlayerChunkPositionText").GetComponent<TextMeshProUGUI>().text = $"{playerX} : {playerZ}";
 
 
         // list of chunks, that should be vidible
@@ -50,10 +50,10 @@ public class ChunkManager : MonoBehaviour
         // removes all inactive chunks
         foreach (Vector2Int c in ActiveChunks)
         {
-            if (!newActiveChunks.Contains(c) && Chunks.ContainsKey(c))
+            if (!newActiveChunks.Contains(c) && ChunkDict.ContainsKey(c))
             {
-                var _go = Chunks[c];
-                Chunks.Remove(c);
+                var _go = ChunkDict[c];
+                ChunkDict.Remove(c);
                 ChunkDestroyQueue.Enqueue(_go);
             }
         }
@@ -61,14 +61,14 @@ public class ChunkManager : MonoBehaviour
         // generates chunk data and paints the chunk
         foreach (Vector2Int v in newActiveChunks)
         {
-            if (!Chunks.ContainsKey(v))
+            if (!ChunkDict.ContainsKey(v))
             {
                 Vector3Int offset = new Vector3Int(v.x, 0, v.y);
                 ChunkData chunkData = ChunkData.GeneratePerlinChunk(offset.x, offset.z);
 
                 var chunk = Instantiate(ChunkPrefab, parent: transform);
                 chunk.transform.localPosition = offset * ChunkData.ChunkSize;
-                Chunks[v] = chunk;
+                ChunkDict[v] = chunk;
                 ChunkBuildQueue.Enqueue(Tuple.Create(chunkData, chunk));
             }
         }
@@ -76,9 +76,18 @@ public class ChunkManager : MonoBehaviour
         ActiveChunks = newActiveChunks;
     }
 
+
+    void SetBlockAt(Vector3Int blockPosition, CubeEnum cubeEnum)
+    {
+        Vector2Int chunkPosition = new Vector2Int(
+            blockPosition.x / ChunkData.ChunkSize,
+            blockPosition.z / ChunkData.ChunkSize);
+
+        var chunk = ChunkDict[chunkPosition];
+
+    }
     CubeEnum GetBlockTypeAt(Vector3Int v)
     {
-
         return CubeEnum.empty;
     }
 
