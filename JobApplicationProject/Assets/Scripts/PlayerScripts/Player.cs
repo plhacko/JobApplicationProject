@@ -1,10 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class Player : MonoBehaviour
 {
     MouseLook MouseLook;
+    CubeEnum BuildingMaterial = CubeEnum.snow;
 
     void Start()
     {
@@ -13,6 +15,7 @@ public class Player : MonoBehaviour
 
     void Update()
     {
+        // destroy cubes
         if (Input.GetMouseButtonDown(0))
         {
             RaycastHit hitObject = MouseLook.GetRaycastHit();
@@ -26,6 +29,14 @@ public class Player : MonoBehaviour
                 ChunkManager.Instance.SetCubeAt(hitObjectVector, CubeEnum.empty);
             }
         }
+        //change build cubes
+        if(Input.GetKeyDown(KeyCode.Alpha1)) { BuildingMaterial = CubeEnum.rock; }
+        if (Input.GetKeyDown(KeyCode.Alpha2)) { BuildingMaterial = CubeEnum.grass; }
+        if (Input.GetKeyDown(KeyCode.Alpha3)) { BuildingMaterial = CubeEnum.snow; }
+        // TODO: rm : debug
+        GameObject.Find("BuildingBlockText").GetComponent<TextMeshProUGUI>().text = BuildingMaterial.ToString();
+        
+        // build cuubes
         if (Input.GetMouseButtonDown(1))
         {
             RaycastHit hitObject = MouseLook.GetRaycastHit();
@@ -50,7 +61,7 @@ public class Player : MonoBehaviour
 
                 // instantiates the cube
                 if (ChunkManager.Instance.GetCubeTypeAt(hitObjectVector) == CubeEnum.empty)
-                    ChunkManager.Instance.SetCubeAt(hitObjectVector, CubeEnum.snow);
+                    ChunkManager.Instance.SetCubeAt(hitObjectVector, BuildingMaterial);
             }
         }
     }
