@@ -76,26 +76,26 @@ public class ChunkManager : Singleton<ChunkManager>
     }
 
 
-    public void SetCubeAt(Vector3Int blockPosition, CubeEnum cubeEnum)
+    public void SetCubeAt(Vector3Int cubePosition, CubeEnum cubeEnum)
     {
-        Chunk chunk = ChunkDict[GetChunkPosition(blockPosition)];
-        Vector3Int cubePositionInChunk = GetCubePositionInChunk(blockPosition);
+        Chunk chunk = ChunkDict[GetChunkPosition(cubePosition)];
+        Vector3Int cubePositionInChunk = GetCubePositionInChunk(cubePosition);
         chunk.SetCubeTypeAt(cubePositionInChunk, cubeEnum);
 
         // update the surrounding
         foreach (Vector3Int v in Chunk.AllVisibleVectors)
         {
-            Chunk neighbourChunk = ChunkDict[GetChunkPosition(blockPosition + v)];
-            Vector3Int neighbourCubePositionInChunk = GetCubePositionInChunk(blockPosition + v);
+            Chunk neighbourChunk = ChunkDict[GetChunkPosition(cubePosition + v)];
+            Vector3Int neighbourCubePositionInChunk = GetCubePositionInChunk(cubePosition + v);
 
             neighbourChunk.UpdateVisibilityAt(neighbourCubePositionInChunk);
         }
 
     }
     // from global position of the cube gets from its chunk the correct type
-    public CubeEnum GetBlockTypeAt(Vector3Int blockPosition)
+    public CubeEnum GetCubeTypeAt(Vector3Int cubePosition)
     {
-        Vector2Int chunkPosition = GetChunkPosition(blockPosition);
+        Vector2Int chunkPosition = GetChunkPosition(cubePosition);
 
         // range check
         // TODO: for now if we are at the edge of lastly generated chunk we regard as if there is an air
@@ -108,13 +108,13 @@ public class ChunkManager : Singleton<ChunkManager>
         Chunk chunk = ChunkDict[chunkPosition];
 
         // range check for the top and bottom vertical layer
-        if (blockPosition.y >= ChunkData.ChunkHeight)
+        if (cubePosition.y >= ChunkData.ChunkHeight)
             return CubeEnum.empty;
-        else if (blockPosition.y < 0)
+        else if (cubePosition.y < 0)
             return CubeEnum.rock;
 
-        // returns the block type from corresponding chunk
-        Vector3Int cubePositionInChunk = GetCubePositionInChunk(blockPosition);
+        // returns the cube type from corresponding chunk
+        Vector3Int cubePositionInChunk = GetCubePositionInChunk(cubePosition);
         return chunk.GetCubeTypeAt(cubePositionInChunk);
     }
 
@@ -158,12 +158,12 @@ public class ChunkManager : Singleton<ChunkManager>
         int res = a / b;
         return (a < 0 && a != b * res) ? res - 1 : res;
     }
-    static Vector2Int GetChunkPosition(Vector3Int blockPosition)
-        => new Vector2Int(div(blockPosition.x, ChunkData.ChunkSize), div(blockPosition.z, ChunkData.ChunkSize));
+    static Vector2Int GetChunkPosition(Vector3Int cubePosition)
+        => new Vector2Int(div(cubePosition.x, ChunkData.ChunkSize), div(cubePosition.z, ChunkData.ChunkSize));
 
-    static Vector3Int GetCubePositionInChunk(Vector3Int blockPosition)
+    static Vector3Int GetCubePositionInChunk(Vector3Int cubePosition)
     => new Vector3Int(
-            mod(blockPosition.x, ChunkData.ChunkSize),
-            blockPosition.y,
-            mod(blockPosition.z, ChunkData.ChunkSize));
+            mod(cubePosition.x, ChunkData.ChunkSize),
+            cubePosition.y,
+            mod(cubePosition.z, ChunkData.ChunkSize));
 }

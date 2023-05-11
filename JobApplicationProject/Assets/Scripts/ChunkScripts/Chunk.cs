@@ -48,8 +48,9 @@ class Chunk : MonoBehaviour
         {
             Destroy(VisibleCubesDict[cubePositionInChunk]);
             VisibleCubesDict.Remove(cubePositionInChunk);
-            InstanciateCubeAt(cubePositionInChunk);
         }
+        InstanciateCubeAt(cubePositionInChunk);
+
     }
 
     // instantiates each visible cube
@@ -75,7 +76,7 @@ class Chunk : MonoBehaviour
         {
             // range check
             Vector3Int neighbourPositionInChuk = cubePositionInChunk + v + ChunkPosition * ChunkData.ChunkSize;
-            if (ChunkManager.Instance.GetBlockTypeAt(neighbourPositionInChuk) == CubeEnum.empty)
+            if (ChunkManager.Instance.GetCubeTypeAt(neighbourPositionInChuk) == CubeEnum.empty)
                 return true;
         }
         return false;
