@@ -10,12 +10,12 @@ using static UnityEditor.Progress;
 public class ChunkManager : Singleton<ChunkManager>
 {
     // active chunks
-    Dictionary<Vector2Int, GameObject> ChunkDict = new Dictionary<Vector2Int, GameObject>();
+    Dictionary<Vector2Int, Chunk> ChunkDict = new Dictionary<Vector2Int, Chunk>();
     List<Vector2Int> ActiveChunks = new List<Vector2Int>();
 
     // queues to build/destory for corutines ChunkBuilderCorutine and ChunkDestroyerCorutine 
-    Queue<Tuple<ChunkData, GameObject>> ChunkBuildQueue = new Queue<Tuple<ChunkData, GameObject>>();
-    Queue<GameObject> ChunkDestroyQueue = new Queue<GameObject>();
+    Queue<Chunk> ChunkBuildQueue = new Queue<Chunk>();
+    Queue<Chunk> ChunkDestroyQueue = new Queue<Chunk>();
 
     CubePrefabManager CubePrefabManager;
     [SerializeField] GameObject ChunkPrefab;
@@ -65,11 +65,12 @@ public class ChunkManager : Singleton<ChunkManager>
             {
                 Vector3Int offset = new Vector3Int(v.x, 0, v.y);
                 ChunkData chunkData = ChunkData.GeneratePerlinChunk(offset.x, offset.z);
+                Chunk chunk = Instantiate(ChunkPrefab, parent: transform).GetComponent<Chunk>();
 
-                var chunk = Instantiate(ChunkPrefab, parent: transform);
                 chunk.transform.localPosition = offset * ChunkData.ChunkSize;
+                chunk.Initialize(chunkData);
                 ChunkDict[v] = chunk;
-                ChunkBuildQueue.Enqueue(Tuple.Create(chunkData, chunk));
+                ChunkBuildQueue.Enqueue(chunk);
             }
         }
 
@@ -77,15 +78,28 @@ public class ChunkManager : Singleton<ChunkManager>
     }
 
 
-    void SetBlockAt(Vector3Int blockPosition, CubeEnum cubeEnum)
+    public void SetCubeAt(Vector3Int blockPosition, CubeEnum cubeEnum)
     {
         Vector2Int chunkPosition = new Vector2Int(
-            blockPosition.x / ChunkData.ChunkSize,
-            blockPosition.z / ChunkData.ChunkSize);
+            div(blockPosition.x, ChunkData.ChunkSize),
+            div(blockPosition.z, ChunkData.ChunkSize));
+        Chunk chunk = ChunkDict[chunkPosition];
 
-        var chunk = ChunkDict[chunkPosition];
 
+        Vector3Int cubePosition = new Vector3Int(
+            mod(blockPosition.x, ChunkData.ChunkSize),
+            blockPosition.y,
+            mod(blockPosition.z, ChunkData.ChunkSize));
+        chunk.SetCubeTypeAt(cubePosition, cubeEnum);
+
+        int mod(int x, int m) => (x % m + m) % m;
+        int div(int a, int b)
+        {
+            int res = a / b;
+            return (a < 0 && a != b * res) ? res - 1 : res;
+        }
     }
+
     CubeEnum GetBlockTypeAt(Vector3Int v)
     {
         return CubeEnum.empty;
@@ -100,10 +114,9 @@ public class ChunkManager : Singleton<ChunkManager>
         {
             if (ChunkBuildQueue.Count > 0)
             {
-                var data = ChunkBuildQueue.Dequeue();
-                ChunkData chunkData = data.Item1;
-                GameObject chunk = data.Item2;
-                DrawChunk(chunk, chunkData);
+                Chunk chunk = ChunkBuildQueue.Dequeue();
+                if (chunk != null)
+                    chunk.DrawChunk();
             }
             yield return null;
         }
@@ -118,56 +131,10 @@ public class ChunkManager : Singleton<ChunkManager>
         {
             if (ChunkDestroyQueue.Count > 0)
             {
-                GameObject go = ChunkDestroyQueue.Dequeue();
-                Destroy(go);
+                Chunk chunk = ChunkDestroyQueue.Dequeue();
+                Destroy(chunk.gameObject);
             }
             yield return null;
-        }
-    }
-
-    // instantiates each visible cube
-    // using corutine we can instantiate the chunks gradualy (we don't influnce the performence as much)
-    void DrawChunk(GameObject chunk, ChunkData cd)
-    {
-        for (int x = 0; x < ChunkData.ChunkSize; x++)
-        {
-            for (int y = 0; y < ChunkData.ChunkHeight; y++)
-            {
-                for (int z = 0; z < ChunkData.ChunkSize; z++)
-                {
-                    var prefab = CubePrefabManager.GetCubePrefab(cd.Body[x, y, z]);
-                    if (prefab != null && isVisibleCheck(new Vector3Int(x, y, z)))
-                    {
-                        if (chunk != null)
-                        {
-                            var go = Instantiate(prefab, parent: chunk.transform);
-                            go.transform.localPosition = new Vector3(x, y, z);
-                        }
-                    }
-                }
-            }
-        }
-
-        bool isVisibleCheck(Vector3Int pos)
-        {
-            Vector3Int[] visibleVectors = new Vector3Int[]
-            {new Vector3Int(1,0,0),new Vector3Int(0,1,0), new Vector3Int(0,0,1),
-            new Vector3Int(-1,0,0),new Vector3Int(0,-1,0), new Vector3Int(0,0,-1) };
-
-            foreach (var v in visibleVectors)
-            {
-                var _ = pos + v;
-
-                // rangeCheck
-                int s = ChunkData.ChunkSize;
-                if (_.x < 0 || _.y < 0 || _.z < 0
-                    || _.x >= s || _.y >= s || _.z >= s)
-                    continue; // TODO: fix bug: cubes that are on the edge of the chunk may be missing
-
-                if (cd.Body[_.x, _.y, _.z] == CubeEnum.empty)
-                    return true;
-            }
-            return false;
         }
     }
 }

@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ChunkData : MonoBehaviour
+public class ChunkData
 {
     const int ChunkSizeConst = 16;
     const int ChunkHeightConst = 36;

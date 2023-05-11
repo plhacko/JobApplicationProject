@@ -17,7 +17,14 @@ public class Player : MonoBehaviour
         {
             RaycastHit hitObject = MouseLook.GetRaycastHit();
             if (hitObject.transform != null)
-                Destroy(hitObject.transform.gameObject);
+            {
+                Vector3Int hitObjectVector = new Vector3Int(
+                    (int)hitObject.transform.position.x,
+                    (int)hitObject.transform.position.y,
+                    (int)hitObject.transform.position.z);
+
+                ChunkManager.Instance.SetCubeAt(hitObjectVector, CubeEnum.empty);
+            }
         }
     }
 }

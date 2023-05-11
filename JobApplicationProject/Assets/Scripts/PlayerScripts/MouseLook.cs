@@ -10,8 +10,8 @@ public class MouseLook : MonoBehaviour
     Transform PlayerBody;
     float yRotation;
 
-    float MaxDistance = 100f;
-    [SerializeField] LayerMask LayerMask;
+    // TODO: redo to be settalbe from player
+    float MaxDistance = 10f;
 
     void Start()
     {
@@ -43,8 +43,8 @@ public class MouseLook : MonoBehaviour
 
         // TODO: rm debug
         var text = GameObject.Find("RaycastObjectText").GetComponent<TextMeshProUGUI>();
-        if (Physics.Raycast(CameraRay, out RaycastHit hitObject))
-            text.text = hitObject.transform.parent.name;
+        if (Physics.Raycast(CameraRay, out RaycastHit hitObject, maxDistance: MaxDistance))
+            text.text = ($"{hitObject.point.ToString()} \n {hitObject.transform.position.ToString()}");
         else
             text.text = "";
 
