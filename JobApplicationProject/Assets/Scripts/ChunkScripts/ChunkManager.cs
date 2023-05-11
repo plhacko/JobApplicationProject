@@ -38,7 +38,7 @@ public class ChunkManager : Singleton<ChunkManager>
         GameObject.Find("PlayerChunkPositionText").GetComponent<TextMeshProUGUI>().text = $"{playerX} : {playerZ}";
 
 
-        // list of chunks, that should be vidible
+        // list of chunks, that should be visible
         List<Vector2Int> newActiveChunks = new List<Vector2Int>();
         for (int x = -RenderDistance; x <= RenderDistance; x++)
         {
@@ -60,6 +60,7 @@ public class ChunkManager : Singleton<ChunkManager>
         // generates chunk data and paints the chunk
         foreach (Vector2Int v in newActiveChunks)
         {
+            // generate data
             if (!ChunkDict.ContainsKey(v))
             {
                 Vector3Int offset = new Vector3Int(v.x, 0, v.y);
@@ -68,8 +69,15 @@ public class ChunkManager : Singleton<ChunkManager>
 
                 chunk.Initialize(chunkData, offset);
                 ChunkDict[v] = chunk;
-                ChunkBuildQueue.Enqueue(chunk);
             }
+            // paint if near player
+            Chunk c = ChunkDict[v];
+            if (!c.IsDrawn && RenderDistance > Vector3Int.Distance(c.ChunkPosition, new Vector3Int(playerX, 0, playerZ)))
+            {
+                ChunkBuildQueue.Enqueue(c);
+                c.IsDrawn = true;
+            }
+
         }
 
         ActiveChunks = newActiveChunks;

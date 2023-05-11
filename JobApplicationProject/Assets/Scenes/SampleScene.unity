@@ -1133,7 +1133,7 @@ MonoBehaviour:
   _persistent: 0
   ChunkPrefab: {fileID: 7327842787836847707, guid: 8b52049d8685fcf4aa4be3c6ca2afcdf, type: 3}
   Player: {fileID: 1955814331}
-  RenderDistance: 3
+  RenderDistance: 4
 --- !u!4 &2109859726
 Transform:
   m_ObjectHideFlags: 0
