@@ -10,10 +10,11 @@ class Chunk : MonoBehaviour
 {
     public bool WasModified { get; private set; } = false;
     ChunkData ChunkData = new ChunkData();
+    Vector3Int ChunkPosition;
     Dictionary<Vector3Int, GameObject> VisibleCubesDict = new Dictionary<Vector3Int, GameObject>();
     CubePrefabManager CubePrefabManager;
 
-    static Vector3Int[] AllVisibleVectors = new Vector3Int[]{
+    public static Vector3Int[] AllVisibleVectors = new Vector3Int[]{
             new Vector3Int(1,0,0), new Vector3Int(0,1,0), new Vector3Int(0,0,1),
             new Vector3Int(-1,0,0), new Vector3Int(0,-1,0), new Vector3Int(0,0,-1) };
 
@@ -23,49 +24,31 @@ class Chunk : MonoBehaviour
         CubePrefabManager = CubePrefabManager.Instance;
     }
 
-    public void Initialize(ChunkData chunkData)
+    public void Initialize(ChunkData chunkData, Vector3Int chunkPosition)
     {
+        transform.localPosition = chunkPosition * ChunkData.ChunkSize;
+
         ChunkData = chunkData;
+        ChunkPosition = chunkPosition;
+    }
+    public CubeEnum GetCubeTypeAt(Vector3Int cubePositionInChunk)
+    {
+        return ChunkData.Body[cubePositionInChunk.x, cubePositionInChunk.y, cubePositionInChunk.z];
     }
 
-    public void SetCubeTypeAt(Vector3Int point, CubeEnum cubeEnum)
+    // changes the CubeEnum type at position
+    // if needed destroys its visible part or instantiates it
+    // is not reponsible for updating it's surroundings
+    public void SetCubeTypeAt(Vector3Int cubePositionInChunk, CubeEnum cubeEnum)
     {
-        ChunkData.Body[point.x, point.y, point.z] = cubeEnum;
+        ChunkData.Body[cubePositionInChunk.x, cubePositionInChunk.y, cubePositionInChunk.z] = cubeEnum;
         WasModified = true;
 
-        Destroy(VisibleCubesDict[point]);
-        VisibleCubesDict.Remove(point);
-        InstanciateCubeAt(point);
-
-
-        // update the surrounding
-        foreach (Vector3Int v in AllVisibleVectors)
+        if (VisibleCubesDict.ContainsKey(cubePositionInChunk))
         {
-            Vector3Int _ = point + v;
-
-            // rangeCheck
-            int chunkSize = ChunkData.ChunkSize;
-            int chunkHeight = ChunkData.ChunkHeight;
-            if (_.x < 0 || _.y < 0 || _.z < 0
-                || _.x >= chunkSize || _.y >= chunkHeight || _.z >= chunkSize)
-            { continue; }
-
-            if (!VisibleCubesDict.ContainsKey(_))
-            {
-                if (IsVisibleCheck(_))
-                {
-                    InstanciateCubeAt(_);
-                }
-            }
-            else
-            {
-                if (!IsVisibleCheck(_))
-                {
-                    Destroy(VisibleCubesDict[_]);
-                    VisibleCubesDict.Remove(_);
-                }
-
-            }
+            Destroy(VisibleCubesDict[cubePositionInChunk]);
+            VisibleCubesDict.Remove(cubePositionInChunk);
+            InstanciateCubeAt(cubePositionInChunk);
         }
     }
 
@@ -86,33 +69,43 @@ class Chunk : MonoBehaviour
         }
     }
 
-    bool IsVisibleCheck(Vector3Int pos)
+    bool IsVisibleCheck(Vector3Int cubePositionInChunk)
     {
         foreach (var v in AllVisibleVectors)
         {
-            var _ = pos + v;
-
-            // rangeCheck
-            int s = ChunkData.ChunkSize;
-            if (_.x < 0 || _.y < 0 || _.z < 0
-                || _.x >= s || _.y >= s || _.z >= s)
-                continue; // TODO: fix bug: cubes that are on the edge of the chunk may be missing
-
-            if (ChunkData.Body[_.x, _.y, _.z] == CubeEnum.empty)
+            // range check
+            Vector3Int neighbourPositionInChuk = cubePositionInChunk + v + ChunkPosition * ChunkData.ChunkSize;
+            if (ChunkManager.Instance.GetBlockTypeAt(neighbourPositionInChuk) == CubeEnum.empty)
                 return true;
         }
         return false;
     }
 
-    void InstanciateCubeAt(Vector3Int p)
+    void InstanciateCubeAt(Vector3Int cubePositionInChunk)
     {
+        var p = cubePositionInChunk;
+
         var prefab = CubePrefabManager.Instance.GetCubePrefab(ChunkData.Body[p.x, p.y, p.z]);
         if (prefab == null) { return; }
 
         var cube = Instantiate(prefab, parent: transform);
         VisibleCubesDict.Add(new Vector3Int(p.x, p.y, p.z), cube);
         cube.transform.localPosition = new Vector3(p.x, p.y, p.z);
+    }
 
+    // for specified position instantiates or destroys a cube based on its visibility
+    public void UpdateVisibilityAt(Vector3Int cubePositionInChunk)
+    {
+        if (!VisibleCubesDict.ContainsKey(cubePositionInChunk))
+        {
+            if (IsVisibleCheck(cubePositionInChunk))
+                InstanciateCubeAt(cubePositionInChunk);
+        }
+        else if (!IsVisibleCheck(cubePositionInChunk))
+        {
+            Destroy(VisibleCubesDict[cubePositionInChunk]);
+            VisibleCubesDict.Remove(cubePositionInChunk);
+        }
     }
 }
 

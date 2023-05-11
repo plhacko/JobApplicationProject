@@ -1,9 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using TMPro;
 using TreeEditor;
+using UnityEditor.Overlays;
 using UnityEngine;
 using static UnityEditor.Progress;
 
@@ -17,7 +19,6 @@ public class ChunkManager : Singleton<ChunkManager>
     Queue<Chunk> ChunkBuildQueue = new Queue<Chunk>();
     Queue<Chunk> ChunkDestroyQueue = new Queue<Chunk>();
 
-    CubePrefabManager CubePrefabManager;
     [SerializeField] GameObject ChunkPrefab;
     [SerializeField] Player Player;
 
@@ -25,8 +26,6 @@ public class ChunkManager : Singleton<ChunkManager>
 
     void Start()
     {
-        CubePrefabManager = CubePrefabManager.Instance;
-
         StartCoroutine(ChunkBuilderCorutine());
         StartCoroutine(ChunkDestroyerCorutine());
     }
@@ -67,8 +66,7 @@ public class ChunkManager : Singleton<ChunkManager>
                 ChunkData chunkData = ChunkData.GeneratePerlinChunk(offset.x, offset.z);
                 Chunk chunk = Instantiate(ChunkPrefab, parent: transform).GetComponent<Chunk>();
 
-                chunk.transform.localPosition = offset * ChunkData.ChunkSize;
-                chunk.Initialize(chunkData);
+                chunk.Initialize(chunkData, offset);
                 ChunkDict[v] = chunk;
                 ChunkBuildQueue.Enqueue(chunk);
             }
@@ -80,29 +78,44 @@ public class ChunkManager : Singleton<ChunkManager>
 
     public void SetCubeAt(Vector3Int blockPosition, CubeEnum cubeEnum)
     {
-        Vector2Int chunkPosition = new Vector2Int(
-            div(blockPosition.x, ChunkData.ChunkSize),
-            div(blockPosition.z, ChunkData.ChunkSize));
+        Chunk chunk = ChunkDict[GetChunkPosition(blockPosition)];
+        Vector3Int cubePositionInChunk = GetCubePositionInChunk(blockPosition);
+        chunk.SetCubeTypeAt(cubePositionInChunk, cubeEnum);
+
+        // update the surrounding
+        foreach (Vector3Int v in Chunk.AllVisibleVectors)
+        {
+            Chunk neighbourChunk = ChunkDict[GetChunkPosition(blockPosition + v)];
+            Vector3Int neighbourCubePositionInChunk = GetCubePositionInChunk(blockPosition + v);
+
+            neighbourChunk.UpdateVisibilityAt(neighbourCubePositionInChunk);
+        }
+
+    }
+    // from global position of the cube gets from its chunk the correct type
+    public CubeEnum GetBlockTypeAt(Vector3Int blockPosition)
+    {
+        Vector2Int chunkPosition = GetChunkPosition(blockPosition);
+
+        // range check
+        // TODO: for now if we are at the edge of lastly generated chunk we regard as if there is an air
+        // that results in creating a full wall of unnecessary gameobjects
+        // this might be solved by generating one more layer of chunks, that will not be drawn
+        if (!ChunkDict.ContainsKey(chunkPosition))
+            return CubeEnum.empty;
+
+        // getting the coresponding chunk
         Chunk chunk = ChunkDict[chunkPosition];
 
+        // range check for the top and bottom vertical layer
+        if (blockPosition.y >= ChunkData.ChunkHeight)
+            return CubeEnum.empty;
+        else if (blockPosition.y < 0)
+            return CubeEnum.rock;
 
-        Vector3Int cubePosition = new Vector3Int(
-            mod(blockPosition.x, ChunkData.ChunkSize),
-            blockPosition.y,
-            mod(blockPosition.z, ChunkData.ChunkSize));
-        chunk.SetCubeTypeAt(cubePosition, cubeEnum);
-
-        int mod(int x, int m) => (x % m + m) % m;
-        int div(int a, int b)
-        {
-            int res = a / b;
-            return (a < 0 && a != b * res) ? res - 1 : res;
-        }
-    }
-
-    CubeEnum GetBlockTypeAt(Vector3Int v)
-    {
-        return CubeEnum.empty;
+        // returns the block type from corresponding chunk
+        Vector3Int cubePositionInChunk = GetCubePositionInChunk(blockPosition);
+        return chunk.GetCubeTypeAt(cubePositionInChunk);
     }
 
     // corutine that should be called only once on the start
@@ -137,4 +150,20 @@ public class ChunkManager : Singleton<ChunkManager>
             yield return null;
         }
     }
+
+    // tools to navigate chunks
+    static int mod(int x, int m) => (x % m + m) % m;
+    static int div(int a, int b)
+    {
+        int res = a / b;
+        return (a < 0 && a != b * res) ? res - 1 : res;
+    }
+    static Vector2Int GetChunkPosition(Vector3Int blockPosition)
+        => new Vector2Int(div(blockPosition.x, ChunkData.ChunkSize), div(blockPosition.z, ChunkData.ChunkSize));
+
+    static Vector3Int GetCubePositionInChunk(Vector3Int blockPosition)
+    => new Vector3Int(
+            mod(blockPosition.x, ChunkData.ChunkSize),
+            blockPosition.y,
+            mod(blockPosition.z, ChunkData.ChunkSize));
 }
