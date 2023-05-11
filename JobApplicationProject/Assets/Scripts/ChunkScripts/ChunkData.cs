@@ -6,13 +6,15 @@ using UnityEngine;
 public class ChunkData
 {
     const int ChunkSizeConst = 16;
-    const int ChunkHeightConst = 36;
-    const int MaxGroundHeightConst = 16;
+    const int ChunkHeightConst = 42;
+    const int MaxGroundHeightConst = 20;
+    const int MinGroundHeightConst = 5;
 
     public CubeEnum[,,] Body;
 
     public static int ChunkSize { get => ChunkSizeConst; }
     public static int ChunkHeight { get => ChunkHeightConst; }
+    public static int MinGroundHeight { get => MinGroundHeightConst; }
     public static int MaxGroundHeight { get => MaxGroundHeightConst; }
 
     public ChunkData(CubeEnum[,,] body) { Body = body; }
@@ -46,7 +48,7 @@ public class ChunkData
                     // generates the groundheight for speciffic x,z coordinate
                     float perlinX = (float)x / ChunkSizeConst + offsetX;
                     float perlinZ = (float)z / ChunkSizeConst + offsetZ;
-                    float perlinGroundHeight = Mathf.PerlinNoise(perlinX, perlinZ) * MaxGroundHeight;
+                    float perlinGroundHeight = MinGroundHeight + Mathf.PerlinNoise(perlinX, perlinZ) * (MaxGroundHeight - MinGroundHeight);
 
                     // the top layer is grass or snow (if it is high enough)
                     // the rest is filled with rocks
