@@ -51,8 +51,10 @@ public class MouseLook : MonoBehaviour
             v.z = Mathf.Abs(v.z) >= max ? v.z : 0;
             v.Normalize();
             Vector3Int p = new Vector3Int((int)v.x, (int)v.y, (int)v.z);
-
-            text.text = ($"{hitObject.point} \n {hitObject.transform.position} \n {hitObject.transform.position + p}");
+            
+            text.text = ($"Cursor {hitObject.point}" +
+                $"\nMine cube {hitObject.transform.position}" +
+                $"\nPlace cube {hitObject.transform.position + p}");
         }
         else
             text.text = "";
