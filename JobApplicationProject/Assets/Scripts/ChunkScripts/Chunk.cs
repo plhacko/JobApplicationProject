@@ -42,6 +42,10 @@ class Chunk : MonoBehaviour
     // is not reponsible for updating it's surroundings
     public void SetCubeTypeAt(Vector3Int cubePositionInChunk, CubeEnum cubeEnum)
     {
+        // vertical range check (block at height 0 must not me changed)
+        if (cubePositionInChunk.y < 1 || cubePositionInChunk.y >= ChunkData.ChunkHeight)
+            return;
+
         ChunkData.Body[cubePositionInChunk.x, cubePositionInChunk.y, cubePositionInChunk.z] = cubeEnum;
         WasModified = true;
 
@@ -85,9 +89,12 @@ class Chunk : MonoBehaviour
 
     void InstanciateCubeAt(Vector3Int cubePositionInChunk)
     {
+        if (cubePositionInChunk.y < 0 || cubePositionInChunk.y >= ChunkData.ChunkHeight)
+            return;
+
         var p = cubePositionInChunk;
 
-        var prefab = CubePrefabManager.Instance.GetCubePrefab(ChunkData.Body[p.x, p.y, p.z]);
+         var prefab = CubePrefabManager.Instance.GetCubePrefab(ChunkData.Body[p.x, p.y, p.z]);
         if (prefab == null) { return; }
 
         var cube = Instantiate(prefab, parent: transform);

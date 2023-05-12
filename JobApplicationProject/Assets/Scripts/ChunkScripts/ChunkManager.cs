@@ -77,7 +77,6 @@ public class ChunkManager : Singleton<ChunkManager>
                 ChunkBuildQueue.Enqueue(c);
                 c.IsDrawn = true;
             }
-
         }
 
         ActiveChunks = newActiveChunks;
