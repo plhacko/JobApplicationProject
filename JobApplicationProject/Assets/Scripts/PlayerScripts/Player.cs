@@ -101,6 +101,9 @@ public class Player : MonoBehaviour
 
         // mine (destroy) a cube
         if (RequiredMiningTime <= CurrentMiningTime)
-        { ChunkManager.Instance.SetCubeAt(CurrentMiningTarget, CubeEnum.empty); }
+        {
+            ChunkManager.Instance.SetCubeAt(CurrentMiningTarget, CubeEnum.empty);
+            CurrentMiningTime = 0f;
+        }
     }
 }
