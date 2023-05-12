@@ -23,6 +23,12 @@ public class ChunkManager : Singleton<ChunkManager>
     [SerializeField] Player Player;
 
     [SerializeField] int RenderDistance = 5;
+
+    public static int ChunkSize { get; } = 16;
+    public static int ChunkHeight { get; } = 42;
+    public static int MinGroundHeight { get; } = 5;
+    public static int MaxGroundHeight { get; } = 20;
+
     Vector3Int SeedOffset;
 
     void Start()
@@ -39,8 +45,8 @@ public class ChunkManager : Singleton<ChunkManager>
     private void Update()
     {
         // gets player position in the chunk
-        int playerX = (int)Math.Floor(Player.transform.position.x / ChunkData.ChunkSize);
-        int playerZ = (int)Math.Floor(Player.transform.position.z / ChunkData.ChunkSize);
+        int playerX = (int)Math.Floor(Player.transform.position.x / ChunkSize);
+        int playerZ = (int)Math.Floor(Player.transform.position.z / ChunkSize);
         // debug text // TODO: rm
         GameObject.Find("PlayerChunkPositionText").GetComponent<TextMeshProUGUI>().text = $"{playerX} : {playerZ}";
 
@@ -122,7 +128,7 @@ public class ChunkManager : Singleton<ChunkManager>
         Chunk chunk = ChunkDict[chunkPosition];
 
         // range check for the top and bottom vertical layer
-        if (cubePosition.y >= ChunkData.ChunkHeight)
+        if (cubePosition.y >= ChunkHeight)
             return CubeEnum.empty;
         else if (cubePosition.y < 0)
             return CubeEnum.rock;
@@ -173,11 +179,11 @@ public class ChunkManager : Singleton<ChunkManager>
         return (a < 0 && a != b * res) ? res - 1 : res;
     }
     static Vector2Int GetChunkPosition(Vector3Int cubePosition)
-        => new Vector2Int(div(cubePosition.x, ChunkData.ChunkSize), div(cubePosition.z, ChunkData.ChunkSize));
+        => new Vector2Int(div(cubePosition.x, ChunkSize), div(cubePosition.z, ChunkSize));
 
     static Vector3Int GetCubePositionInChunk(Vector3Int cubePosition)
     => new Vector3Int(
-            mod(cubePosition.x, ChunkData.ChunkSize),
+            mod(cubePosition.x, ChunkSize),
             cubePosition.y,
-            mod(cubePosition.z, ChunkData.ChunkSize));
+            mod(cubePosition.z, ChunkSize));
 }

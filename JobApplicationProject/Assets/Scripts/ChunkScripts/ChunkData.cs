@@ -5,29 +5,25 @@ using UnityEngine;
 
 public class ChunkData
 {
-    const int ChunkSizeConst = 16;
-    const int ChunkHeightConst = 42;
-    const int MaxGroundHeightConst = 20;
-    const int MinGroundHeightConst = 5;
-
     public CubeEnum[,,] Body;
 
-    public static int ChunkSize { get => ChunkSizeConst; }
-    public static int ChunkHeight { get => ChunkHeightConst; }
-    public static int MinGroundHeight { get => MinGroundHeightConst; }
-    public static int MaxGroundHeight { get => MaxGroundHeightConst; }
+    // helpfull methods that makes the following code shorter
+    static int ChunkSize { get => ChunkManager.ChunkSize; }
+    static int ChunkHeight { get => ChunkManager.ChunkHeight; }
+    static int MinGroundHeight { get => ChunkManager.MinGroundHeight; }
+    static int MaxGroundHeight { get => ChunkManager.MaxGroundHeight; }
 
     public ChunkData(CubeEnum[,,] body) { Body = body; }
-    public ChunkData() { Body = new CubeEnum[ChunkSizeConst, ChunkHeightConst, ChunkSizeConst]; }
+    public ChunkData() { Body = new CubeEnum[ChunkSize, ChunkHeight, ChunkSize]; }
 
 
     public void FillWith(CubeEnum cubeEnum)
     {
-        for (int x = 0; x < ChunkSizeConst; x++)
+        for (int x = 0; x < ChunkSize; x++)
         {
-            for (int y = 0; y < ChunkHeightConst; y++)
+            for (int y = 0; y < ChunkHeight; y++)
             {
-                for (int z = 0; z < ChunkSizeConst; z++)
+                for (int z = 0; z < ChunkSize; z++)
                 {
                     Body[x, y, z] = cubeEnum;
                 }
@@ -43,11 +39,11 @@ public class ChunkData
         {
             for (int y = 0; y < MaxGroundHeight; y++)
             {
-                for (int z = 0; z < ChunkSizeConst; z++)
+                for (int z = 0; z < ChunkSize; z++)
                 {
                     // generates the groundheight for speciffic x,z coordinate
-                    float perlinX = (float)x / ChunkSizeConst + offset.x;
-                    float perlinZ = (float)z / ChunkSizeConst + offset.z;
+                    float perlinX = (float)x / ChunkSize+ offset.x;
+                    float perlinZ = (float)z / ChunkSize+ offset.z;
                     float perlinGroundHeight = MinGroundHeight + Mathf.PerlinNoise(perlinX, perlinZ) * (MaxGroundHeight - MinGroundHeight);
 
                     // the top layer is grass or snow (if it is high enough)

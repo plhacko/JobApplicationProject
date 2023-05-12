@@ -27,7 +27,7 @@ class Chunk : MonoBehaviour
 
     public void Initialize(ChunkData chunkData, Vector3Int chunkPosition)
     {
-        transform.localPosition = chunkPosition * ChunkData.ChunkSize;
+        transform.localPosition = chunkPosition * ChunkManager.ChunkSize;
 
         ChunkData = chunkData;
         ChunkPosition = chunkPosition;
@@ -43,7 +43,7 @@ class Chunk : MonoBehaviour
     public void SetCubeTypeAt(Vector3Int cubePositionInChunk, CubeEnum cubeEnum)
     {
         // vertical range check (block at height 0 must not me changed)
-        if (cubePositionInChunk.y < 1 || cubePositionInChunk.y >= ChunkData.ChunkHeight)
+        if (cubePositionInChunk.y < 1 || cubePositionInChunk.y >= ChunkManager.ChunkHeight)
             return;
 
         ChunkData.Body[cubePositionInChunk.x, cubePositionInChunk.y, cubePositionInChunk.z] = cubeEnum;
@@ -62,11 +62,11 @@ class Chunk : MonoBehaviour
     // using corutine we can instantiate the chunks gradualy (we don't influnce the performence as much)
     public void DrawChunk()
     {
-        for (int x = 0; x < ChunkData.ChunkSize; x++)
+        for (int x = 0; x < ChunkManager.ChunkSize; x++)
         {
-            for (int y = 0; y < ChunkData.ChunkHeight; y++)
+            for (int y = 0; y < ChunkManager.ChunkHeight; y++)
             {
-                for (int z = 0; z < ChunkData.ChunkSize; z++)
+                for (int z = 0; z < ChunkManager.ChunkSize; z++)
                 {
                     if (IsVisibleCheck(new Vector3Int(x, y, z)))
                         InstanciateCubeAt(new Vector3Int(x, y, z));
@@ -80,7 +80,7 @@ class Chunk : MonoBehaviour
         foreach (var v in AllVisibleVectors)
         {
             // range check
-            Vector3Int neighbourPositionInChuk = cubePositionInChunk + v + ChunkPosition * ChunkData.ChunkSize;
+            Vector3Int neighbourPositionInChuk = cubePositionInChunk + v + ChunkPosition * ChunkManager.ChunkSize;
             if (ChunkManager.Instance.GetCubeTypeAt(neighbourPositionInChuk) == CubeEnum.empty)
                 return true;
         }
@@ -89,7 +89,7 @@ class Chunk : MonoBehaviour
 
     void InstanciateCubeAt(Vector3Int cubePositionInChunk)
     {
-        if (cubePositionInChunk.y < 0 || cubePositionInChunk.y >= ChunkData.ChunkHeight)
+        if (cubePositionInChunk.y < 0 || cubePositionInChunk.y >= ChunkManager.ChunkHeight)
             return;
 
         var p = cubePositionInChunk;
