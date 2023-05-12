@@ -23,11 +23,18 @@ public class ChunkManager : Singleton<ChunkManager>
     [SerializeField] Player Player;
 
     [SerializeField] int RenderDistance = 5;
+    Vector3Int SeedOffset;
 
     void Start()
     {
         StartCoroutine(ChunkBuilderCorutine());
         StartCoroutine(ChunkDestroyerCorutine());
+
+        SeedOffset = new Vector3Int(
+            UnityEngine.Random.Range(0, 10_000),
+            0,
+            UnityEngine.Random.Range(0, 10_000));
+
     }
     private void Update()
     {
@@ -64,7 +71,7 @@ public class ChunkManager : Singleton<ChunkManager>
             if (!ChunkDict.ContainsKey(v))
             {
                 Vector3Int offset = new Vector3Int(v.x, 0, v.y);
-                ChunkData chunkData = ChunkData.GeneratePerlinChunk(offset.x, offset.z);
+                ChunkData chunkData = ChunkData.GeneratePerlinChunk(offset + SeedOffset);
                 Chunk chunk = Instantiate(ChunkPrefab, parent: transform).GetComponent<Chunk>();
 
                 chunk.Initialize(chunkData, offset);

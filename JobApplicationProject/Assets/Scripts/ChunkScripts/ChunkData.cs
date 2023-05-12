@@ -35,7 +35,7 @@ public class ChunkData
         }
     }
 
-    public static ChunkData GeneratePerlinChunk(int offsetX, int offsetZ)
+    public static ChunkData GeneratePerlinChunk(Vector3Int offset)
     {
         ChunkData chunkData = new ChunkData();
 
@@ -46,8 +46,8 @@ public class ChunkData
                 for (int z = 0; z < ChunkSizeConst; z++)
                 {
                     // generates the groundheight for speciffic x,z coordinate
-                    float perlinX = (float)x / ChunkSizeConst + offsetX;
-                    float perlinZ = (float)z / ChunkSizeConst + offsetZ;
+                    float perlinX = (float)x / ChunkSizeConst + offset.x;
+                    float perlinZ = (float)z / ChunkSizeConst + offset.z;
                     float perlinGroundHeight = MinGroundHeight + Mathf.PerlinNoise(perlinX, perlinZ) * (MaxGroundHeight - MinGroundHeight);
 
                     // the top layer is grass or snow (if it is high enough)
