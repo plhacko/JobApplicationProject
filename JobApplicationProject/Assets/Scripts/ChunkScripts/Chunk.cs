@@ -10,7 +10,7 @@ class Chunk : MonoBehaviour
 {
     public bool WasModified { get; private set; } = false;
     public bool IsDrawn { get; set; } = false;
-    ChunkData ChunkData = new ChunkData();
+    public ChunkData ChunkData { get; private set; } = new ChunkData();
     public Vector3Int ChunkPosition { get; private set; }
     Dictionary<Vector3Int, GameObject> VisibleCubesDict = new Dictionary<Vector3Int, GameObject>();
     CubePrefabManager CubePrefabManager;

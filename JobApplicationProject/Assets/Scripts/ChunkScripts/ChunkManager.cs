@@ -15,6 +15,9 @@ public class ChunkManager : Singleton<ChunkManager>
     Dictionary<Vector2Int, Chunk> ChunkDict = new Dictionary<Vector2Int, Chunk>();
     List<Vector2Int> ActiveChunks = new List<Vector2Int>();
 
+    // saved modified chunks
+    Dictionary<Vector2Int, ChunkData> SavedChunkDict = new Dictionary<Vector2Int, ChunkData>();
+
     // queues to build/destory for corutines ChunkBuilderCorutine and ChunkDestroyerCorutine 
     Queue<Chunk> ChunkBuildQueue = new Queue<Chunk>();
     Queue<Chunk> ChunkDestroyQueue = new Queue<Chunk>();
@@ -64,9 +67,14 @@ public class ChunkManager : Singleton<ChunkManager>
         {
             if (!newActiveChunks.Contains(c) && ChunkDict.ContainsKey(c))
             {
-                var _go = ChunkDict[c];
+                Chunk chunk = ChunkDict[c];
                 ChunkDict.Remove(c);
-                ChunkDestroyQueue.Enqueue(_go);
+                ChunkDestroyQueue.Enqueue(chunk);
+
+                if (chunk.WasModified)
+                {
+                    SavedChunkDict[c] = chunk.ChunkData;
+                }
             }
         }
 
@@ -77,7 +85,8 @@ public class ChunkManager : Singleton<ChunkManager>
             if (!ChunkDict.ContainsKey(v))
             {
                 Vector3Int offset = new Vector3Int(v.x, 0, v.y);
-                ChunkData chunkData = ChunkData.GeneratePerlinChunk(offset + SeedOffset);
+                // generates new data only if needed
+                ChunkData chunkData = SavedChunkDict.ContainsKey(v) ? SavedChunkDict[v] : ChunkData.GeneratePerlinChunk(offset + SeedOffset);
                 Chunk chunk = Instantiate(ChunkPrefab, parent: transform).GetComponent<Chunk>();
 
                 chunk.Initialize(chunkData, offset);
