@@ -1,14 +1,23 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
+
+[Serializable]
+struct CubePrefabTupplle
+{
+    public CubeEnum CubeEnum;
+    public GameObject Prefab;
+    public float MineTime;
+}
 
 public class CubePrefabManager : Singleton<CubePrefabManager>
 {
     [SerializeField] GameObject ErrorCubePrefab;
     [SerializeField] float DefaultMiningTime = 10f;
 
-    [Tooltip("Coresponds to the CubeEnums")]
+    [Header("Coresponds to the CubeEnums (CubeEnum is uneditable)")]
     [SerializeField] CubePrefabTupplle[] CubePrefabs;
     public GameObject GetCubePrefab(CubeEnum c)
     {
@@ -26,11 +35,36 @@ public class CubePrefabManager : Singleton<CubePrefabManager>
             return DefaultMiningTime;
     }
 
-}
-[Serializable]
-struct CubePrefabTupplle
-{
-    public GameObject Prefab;
-    public float MineTime;    
-}
 
+#if UNITY_EDITOR
+    [CustomEditor(typeof(CubePrefabManager))]
+    class CubePrefabManagerEditor : Editor
+    {
+        public override void OnInspectorGUI()
+        {
+            base.OnInspectorGUI();
+
+            CubePrefabManager cubePrefabManager = (CubePrefabManager)target;
+
+            var AllCubeEnums = (CubeEnum[])Enum.GetValues(typeof(CubeEnum));
+
+            if (cubePrefabManager.CubePrefabs.Length != AllCubeEnums.Length)
+            {
+                var newCubePrefabs = new CubePrefabTupplle[AllCubeEnums.Length];
+
+                Array.Copy(
+                    cubePrefabManager.CubePrefabs, newCubePrefabs,
+                    Math.Min(cubePrefabManager.CubePrefabs.Length, newCubePrefabs.Length));
+
+                cubePrefabManager.CubePrefabs = newCubePrefabs;
+            }
+
+            for (int i = 0; i < AllCubeEnums.Length; i++)
+            {
+                cubePrefabManager.CubePrefabs[i].CubeEnum = AllCubeEnums[i];
+            }
+
+        }
+    }
+}
+#endif

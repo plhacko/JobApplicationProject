@@ -5,5 +5,4 @@ public enum CubeEnum : byte
     rock = 1,
     grass = 2,
     snow = 3,
-    missingCube = byte.MaxValue
 };

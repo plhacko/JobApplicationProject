@@ -278,13 +278,17 @@ MonoBehaviour:
   ErrorCubePrefab: {fileID: 8433324170287792666, guid: 2cc1135018dacd14cb2979ccaebd2091, type: 3}
   DefaultMiningTime: 10
   CubePrefabs:
-  - Prefab: {fileID: 0}
+  - CubeEnum: 0
+    Prefab: {fileID: 0}
     MineTime: 0
-  - Prefab: {fileID: 2001844661516957651, guid: 42cf6aeba413f1e4ca27798df0a7c164, type: 3}
+  - CubeEnum: 1
+    Prefab: {fileID: 2001844661516957651, guid: 42cf6aeba413f1e4ca27798df0a7c164, type: 3}
     MineTime: 1
-  - Prefab: {fileID: 4276862021513251505, guid: f34240e5e27cb16419d312247708c6a9, type: 3}
+  - CubeEnum: 2
+    Prefab: {fileID: 4276862021513251505, guid: f34240e5e27cb16419d312247708c6a9, type: 3}
     MineTime: 0.5
-  - Prefab: {fileID: 8433324170287792666, guid: a301083923a0e1548b965e98b79e8282, type: 3}
+  - CubeEnum: 3
+    Prefab: {fileID: 8433324170287792666, guid: a301083923a0e1548b965e98b79e8282, type: 3}
     MineTime: 0.2
 --- !u!1 &705507993
 GameObject:
