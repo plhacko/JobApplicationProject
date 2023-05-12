@@ -12,8 +12,10 @@ public class Player : MonoBehaviour
     float CurrentMiningTime = 0f;
     Vector3Int CurrentMiningTarget;
     float RequiredMiningTime;
-
     Transform GUICursor;
+
+    [SerializeField]
+    float buildCubesMinRange = 1f;
 
     void Start()
     {
@@ -61,6 +63,10 @@ public class Player : MonoBehaviour
                 (int)(hitObject.transform.position.y + dirVec.y),
                 (int)(hitObject.transform.position.z + dirVec.z));
 
+            // check if the player isn't inside the cube
+            if (Vector3.Distance(transform.position, hitObjectVector) < buildCubesMinRange)
+                return;
+            
             // instantiates the cube
             if (ChunkManager.Instance.GetCubeTypeAt(hitObjectVector) == CubeEnum.empty)
                 ChunkManager.Instance.SetCubeAt(hitObjectVector, BuildingMaterial);
